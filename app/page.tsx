@@ -7,7 +7,8 @@ export default async function Home() {
 
   return (
    <div className="flex flex-col items-center justify-center h-screen">
-    <h1 className="text-4xl font-bold text-center">Hi, welcome to naktside.com. Please come back later.</h1>
+    <h1 className="text-4xl font-bold text-center">naktside</h1>
+    <p className="text-center text-gray-500">coming soon</p>
     <a
       href={links?.[0]?.url}
       target="_blank"
