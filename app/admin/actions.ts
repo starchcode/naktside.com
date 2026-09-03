@@ -15,17 +15,19 @@ import {
 } from "@/libs/admin-auth";
 import { verifyTotp } from "@/libs/totp";
 import { isLockedOut, recordFailedAttempt, clearFailedAttempts } from "@/libs/login-attempts";
+import { recordLoginActivity, getLoginActivity as queryLoginActivity } from "@/libs/login-activity";
 import { getVisitStats as queryVisitStats } from "@/libs/visits_data";
 
 export type LoginState = { error?: string; step?: "totp" };
 
 const LOCKOUT_MESSAGE = "Too many failed attempts. Try again in 24 hours.";
 
-async function getClientIp() {
+async function getClientIpAndCountry() {
   const headersList = await headers();
   const forwarded = headersList.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return headersList.get("x-real-ip") ?? "unknown";
+  const ip = forwarded ? forwarded.split(",")[0].trim() : (headersList.get("x-real-ip") ?? "unknown");
+  const country = headersList.get("x-vercel-ip-country") ?? undefined;
+  return { ip, country };
 }
 
 // Step 1: email + password. On success, marks credentials as verified via
@@ -35,7 +37,7 @@ export async function login(
   _prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const ip = await getClientIp();
+  const { ip, country } = await getClientIpAndCountry();
   if (await isLockedOut(ip)) {
     return { error: LOCKOUT_MESSAGE };
   }
@@ -53,8 +55,11 @@ export async function login(
 
   if (!emailMatches || !passwordMatches) {
     await recordFailedAttempt(ip);
+    recordLoginActivity({ outcome: "failed", step: "password", country });
     return { error: "Invalid email or password." };
   }
+
+  recordLoginActivity({ outcome: "success", step: "password", country });
 
   const cookieStore = await cookies();
   cookieStore.set(PENDING_COOKIE_NAME, createPendingToken(), {
@@ -73,7 +78,7 @@ export async function verifyTotpCode(
   _prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const ip = await getClientIp();
+  const { ip, country } = await getClientIpAndCountry();
   if (await isLockedOut(ip)) {
     return { error: LOCKOUT_MESSAGE, step: "totp" };
   }
@@ -87,9 +92,11 @@ export async function verifyTotpCode(
   const code = String(formData.get("code") ?? "").trim();
   if (!verifyTotp(process.env.ADMIN_TOTP_SECRET, code)) {
     await recordFailedAttempt(ip);
+    recordLoginActivity({ outcome: "failed", step: "totp", country });
     return { error: "Invalid code.", step: "totp" };
   }
 
+  recordLoginActivity({ outcome: "success", step: "totp", country });
   await clearFailedAttempts(ip);
   cookieStore.delete(PENDING_COOKIE_NAME);
   cookieStore.set(SESSION_COOKIE_NAME, createSessionToken(), {
@@ -114,4 +121,16 @@ export async function getVisitStats(filters: { range: string; source: string }) 
     throw new Error("Unauthorized");
   }
   return queryVisitStats(filters);
+}
+
+export async function listLoginActivity(filters: {
+  page: number;
+  pageSize: number;
+  from?: string;
+  to?: string;
+}) {
+  if (!(await isAdminAuthenticated())) {
+    throw new Error("Unauthorized");
+  }
+  return queryLoginActivity(filters);
 }

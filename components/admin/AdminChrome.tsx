@@ -9,6 +9,7 @@ import GoToShortcut from "@/components/GoToShortcut";
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/links", label: "Links" },
+  { href: "/admin/login-attempts", label: "Login Attempts" },
 ];
 
 export default function AdminChrome({ children }: { children: ReactNode }) {
