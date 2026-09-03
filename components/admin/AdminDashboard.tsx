@@ -3,8 +3,11 @@
 import { useEffect, useState, useTransition } from "react";
 import { getVisitStats, logout } from "@/app/admin/actions";
 import VisitsChart from "./VisitsChart";
+import CountryChart from "./CountryChart";
 
 const RANGE_OPTIONS = [
+  { value: "12h", label: "Last 12 hours" },
+  { value: "24h", label: "Last 24 hours" },
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
   { value: "90d", label: "Last 90 days" },
@@ -26,6 +29,7 @@ type Stats = {
   total: number;
   bySource: { ig: number; yt: number; other: number };
   timeSeries: Record<string, string | number>[];
+  byCountry: { country: string; count: number }[];
 };
 
 export default function AdminDashboard() {
@@ -115,6 +119,15 @@ export default function AdminDashboard() {
           </div>
 
           <VisitsChart data={stats.timeSeries} source={source} />
+
+          <h2 className="mt-10 mb-4 text-lg font-semibold">Visits by country</h2>
+          <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <StatCard label="Countries" value={stats.byCountry.length} />
+            {stats.byCountry.map((row) => (
+              <StatCard key={row.country} label={row.country} value={row.count} />
+            ))}
+          </div>
+          <CountryChart data={stats.byCountry} />
         </>
       )}
     </div>

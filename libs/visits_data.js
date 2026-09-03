@@ -29,6 +29,8 @@ export async function trackVisit(searchParams) {
 }
 
 const RANGE_TO_SINCE = {
+  "12h": () => hoursAgo(12),
+  "24h": () => hoursAgo(24),
   "7d": () => daysAgo(7),
   "30d": () => daysAgo(30),
   "90d": () => daysAgo(90),
@@ -40,8 +42,20 @@ const RANGE_TO_SINCE = {
   all: () => null,
 };
 
+function hoursAgo(n) {
+  return new Date(Date.now() - n * 60 * 60 * 1000);
+}
+
 function daysAgo(n) {
   return new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+}
+
+// Sub-day ranges need hourly buckets — a day-level bucket would collapse
+// "last 12 hours" into a single point.
+function dateFormatForRange(range) {
+  if (range === "12h" || range === "24h") return "%Y-%m-%d %H:00";
+  if (range === "12m" || range === "all") return "%Y-%m";
+  return "%Y-%m-%d";
 }
 
 // Returns totals for the admin dashboard: overall/per-source counts within
@@ -62,7 +76,7 @@ export async function getVisitStats({ range = "30d", source = "all" } = {}) {
   for (const row of bySourceRows) bySource[row._id] = row.count;
   const total = bySource.ig + bySource.yt + bySource.other;
 
-  const dateFormat = range === "12m" || range === "all" ? "%Y-%m" : "%Y-%m-%d";
+  const dateFormat = dateFormatForRange(range);
   let timeSeries;
 
   if (source === "all") {
@@ -103,9 +117,18 @@ export async function getVisitStats({ range = "30d", source = "all" } = {}) {
     timeSeries = rows.map((row) => ({ date: row._id, count: row.count }));
   }
 
+  const countryMatch = source === "all" ? match : { ...match, source };
+  const countryRows = await Visit.aggregate([
+    { $match: countryMatch },
+    { $group: { _id: { $ifNull: ["$country", "Unknown"] }, count: { $sum: 1 } } },
+    { $sort: { count: 1 } }, // ascending: lowest visits first, highest last
+  ]);
+  const byCountry = countryRows.map((row) => ({ country: row._id, count: row.count }));
+
   return {
     total: source === "all" ? total : (bySource[source] ?? 0),
     bySource,
     timeSeries,
+    byCountry,
   };
 }
