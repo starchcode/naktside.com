@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Source_Code_Pro } from "next/font/google";
+import PrivacyNotice from "@/components/PrivacyNotice";
 import "./globals.css";
 
 const sourceCodePro = Source_Code_Pro({
@@ -20,7 +21,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${sourceCodePro.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <PrivacyNotice />
+      </body>
     </html>
   );
 }

@@ -1,10 +1,14 @@
 import { getLinksData } from "@/libs/links_data";
+import { trackVisit } from "@/libs/visits_data";
 import ContactReveal from "@/components/ContactReveal";
 
-export const revalidate = 60;
-
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const links = await getLinksData();
+  trackVisit(searchParams).catch(() => {});
 
   return (
    <div className="flex flex-col items-center justify-center h-screen">
