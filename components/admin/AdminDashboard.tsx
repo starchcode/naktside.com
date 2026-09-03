@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { getVisitStats, logout } from "@/app/admin/actions";
+import { getVisitStats } from "@/app/admin/actions";
 import VisitsChart from "./VisitsChart";
 import CountryChart from "./CountryChart";
 
@@ -22,9 +22,6 @@ const SOURCE_OPTIONS = [
   { value: "other", label: "Other" },
 ];
 
-const IDLE_LOGOUT_MS = 5 * 60 * 1000;
-const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"] as const;
-
 type Stats = {
   total: number;
   bySource: { ig: number; yt: number; other: number };
@@ -44,36 +41,9 @@ export default function AdminDashboard() {
     });
   }, [range, source]);
 
-  // Auto-logout after 5 minutes with no mouse/keyboard/scroll/touch activity.
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-
-    const resetTimer = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        logout();
-      }, IDLE_LOGOUT_MS);
-    };
-
-    resetTimer();
-    ACTIVITY_EVENTS.forEach((event) => window.addEventListener(event, resetTimer));
-
-    return () => {
-      clearTimeout(timer);
-      ACTIVITY_EVENTS.forEach((event) => window.removeEventListener(event, resetTimer));
-    };
-  }, []);
-
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Visitor dashboard</h1>
-        <form action={logout}>
-          <button className="rounded-full border border-gray-400 px-3 py-1 text-sm transition-opacity hover:opacity-60">
-            Log out
-          </button>
-        </form>
-      </div>
+    <div>
+      <h1 className="mb-8 text-2xl font-bold">Admin dashboard</h1>
 
       <div className="mb-6 flex flex-wrap gap-4">
         <label className="flex flex-col gap-1 text-sm">

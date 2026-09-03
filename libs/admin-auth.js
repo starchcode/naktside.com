@@ -2,7 +2,12 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 
 export const SESSION_COOKIE_NAME = "admin_session";
-export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
+// Fixed length, set once at login and never extended — no client-side code
+// keeps it alive. isAdminAuthenticated() independently re-checks this
+// signed timestamp's age on every request, so the cookie expires entirely
+// on the server's terms: closing the tab, leaving it idle, or JS never
+// running at all makes no difference either way.
+export const SESSION_MAX_AGE_SECONDS = 60 * 30; // 30 minutes
 
 // Set right after email+password check out, before the TOTP code is
 // verified — proves credentials were correct without re-sending them.

@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { headers } from "next/headers";
 import connectMongoDB from "@/libs/mongodb";
 import Visit, { VISIT_SOURCES } from "@/models/visit";
+import { isAdminAuthenticated } from "@/libs/admin-auth";
 
 const VALID_SOURCES = new Set(VISIT_SOURCES);
 
@@ -9,8 +10,11 @@ const VALID_SOURCES = new Set(VISIT_SOURCES);
 // (from Vercel's geo header — the raw IP is never read or stored), then
 // schedules the write for *after* the response has already been sent, so
 // it never delays the page. Anything other than a recognized source
-// (a direct visit, no param at all) is recorded as "other".
+// (a direct visit, no param at all) is recorded as "other". Visits from
+// the logged-in admin themselves are never recorded.
 export async function trackVisit(searchParams) {
+  if (await isAdminAuthenticated()) return;
+
   const { utm_source } = await searchParams;
   const raw = String(
     Array.isArray(utm_source) ? utm_source[0] : utm_source ?? ""
