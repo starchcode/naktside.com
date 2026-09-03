@@ -89,7 +89,7 @@ export default function ContactReveal() {
           onClick={startChallenge}
           className="text-gray-500 underline underline-offset-4 transition-opacity hover:opacity-60 text-left"
         >
-          ccontact me via email by click here
+          ccontact me via email by clicking here
 
         </button>
       )}
