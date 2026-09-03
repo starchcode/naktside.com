@@ -16,7 +16,9 @@ export async function getLinksData() {
 export const getYoutubeLinks = unstable_cache(
   async () => {
     await connectMongoDB();
-    const links = await Link.find({ type: "youtube" }).lean();
+    // $ne: true (not hidden: false) so older docs without the field at all
+    // — from before "hidden" existed — still count as visible.
+    const links = await Link.find({ type: "youtube", hidden: { $ne: true } }).lean();
     return links.map((link) => ({
       id: String(link._id),
       name: link.name,
@@ -45,6 +47,7 @@ function serializeLink(link) {
     url: link.url,
     type: link.type,
     clickCount: link.clickCount ?? 0,
+    hidden: link.hidden ?? false,
   };
 }
 
@@ -54,22 +57,34 @@ export async function getAllLinks() {
   return links.map(serializeLink);
 }
 
-export async function createLink({ name, url, type }) {
+export async function createLink({ name, url, type, hidden }) {
   await connectMongoDB();
-  const link = await Link.create({ name, url, type });
+  const link = await Link.create({ name, url, type, hidden });
   if (type === "youtube") updateTag("youtube-links");
   return serializeLink(link.toObject());
 }
 
-export async function updateLink(id, { name, url, type }) {
+export async function updateLink(id, { name, url, type, hidden }) {
   await connectMongoDB();
   const before = await Link.findById(id).select("type").lean();
-  const link = await Link.findByIdAndUpdate(id, { name, url, type }, { new: true }).lean();
+  const link = await Link.findByIdAndUpdate(
+    id,
+    { name, url, type, hidden },
+    { new: true }
+  ).lean();
 
   // Revalidate if it was a YouTube link, still is, or just became one —
-  // covers every case that could change what the homepage should show.
+  // covers every case that could change what the homepage should show,
+  // including the hidden flag flipping either way.
   if (before?.type === "youtube" || type === "youtube") updateTag("youtube-links");
 
+  return link ? serializeLink(link) : null;
+}
+
+export async function setLinkHidden(id, hidden) {
+  await connectMongoDB();
+  const link = await Link.findByIdAndUpdate(id, { hidden }, { new: true }).lean();
+  if (link?.type === "youtube") updateTag("youtube-links");
   return link ? serializeLink(link) : null;
 }
 

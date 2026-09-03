@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/admin/actions";
+import GoToShortcut from "@/components/GoToShortcut";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard" },
@@ -15,6 +16,7 @@ export default function AdminChrome({ children }: { children: ReactNode }) {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
+      <GoToShortcut keys={["g", "h"]} href="/" />
       <div className="mb-6 flex items-center justify-between">
         <nav className="flex gap-4 text-sm">
           {NAV_ITEMS.map((item) => {

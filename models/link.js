@@ -9,6 +9,7 @@ const linkSchema = new Schema(
       enum: ["youtube", "instagram"],
     },
     clickCount: { type: Number, default: 0 },
+    hidden: { type: Boolean, default: false },
   },
   {
     timestamps: true,

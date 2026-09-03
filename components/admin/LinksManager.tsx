@@ -6,6 +6,7 @@ import {
   createLinkAction,
   updateLinkAction,
   deleteLinkAction,
+  toggleLinkHiddenAction,
   revalidateYoutubeLinksCache,
   type LinkRecord,
 } from "@/app/admin/links-actions";
@@ -18,6 +19,7 @@ export default function LinksManager() {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [type, setType] = useState("youtube");
+  const [hidden, setHidden] = useState(false);
   const [error, setError] = useState("");
   const [revalidateMessage, setRevalidateMessage] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -35,6 +37,7 @@ export default function LinksManager() {
     setName("");
     setUrl("");
     setType("youtube");
+    setHidden(false);
     setError("");
   };
 
@@ -43,6 +46,7 @@ export default function LinksManager() {
     setName(link.name);
     setUrl(link.url);
     setType(link.type);
+    setHidden(link.hidden);
     setError("");
   };
 
@@ -54,6 +58,7 @@ export default function LinksManager() {
     formData.set("name", name);
     formData.set("url", url);
     formData.set("type", type);
+    if (hidden) formData.set("hidden", "on");
 
     startTransition(async () => {
       try {
@@ -67,6 +72,13 @@ export default function LinksManager() {
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
       }
+    });
+  };
+
+  const handleToggleHidden = (link: LinkRecord) => {
+    startTransition(async () => {
+      await toggleLinkHiddenAction(link.id, !link.hidden);
+      refresh();
     });
   };
 
@@ -143,6 +155,15 @@ export default function LinksManager() {
           </select>
         </label>
 
+        <label className="flex items-center gap-2 pb-2 text-sm">
+          <input
+            type="checkbox"
+            checked={hidden}
+            onChange={(e) => setHidden(e.target.checked)}
+          />
+          Hidden (won&apos;t show on the homepage)
+        </label>
+
         <button
           type="submit"
           disabled={isPending}
@@ -177,6 +198,7 @@ export default function LinksManager() {
                 <th className="py-2 pr-4">Type</th>
                 <th className="py-2 pr-4">URL</th>
                 <th className="py-2 pr-4">Clicks</th>
+                <th className="py-2 pr-4">Visible</th>
                 <th className="py-2"></th>
               </tr>
             </thead>
@@ -196,6 +218,14 @@ export default function LinksManager() {
                     </a>
                   </td>
                   <td className="py-2 pr-4">{link.clickCount}</td>
+                  <td className="py-2 pr-4">
+                    <button
+                      onClick={() => handleToggleHidden(link)}
+                      className="underline"
+                    >
+                      {link.hidden ? "Hidden" : "Visible"}
+                    </button>
+                  </td>
                   <td className="py-2 text-right whitespace-nowrap">
                     <button
                       onClick={() => startEdit(link)}

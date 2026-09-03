@@ -7,6 +7,7 @@ import {
   createLink,
   updateLink,
   deleteLink,
+  setLinkHidden,
 } from "@/libs/links_data";
 
 const LINK_TYPES = ["youtube", "instagram"];
@@ -17,6 +18,7 @@ export type LinkRecord = {
   url: string;
   type: string;
   clickCount: number;
+  hidden: boolean;
 };
 
 async function requireAdmin() {
@@ -29,12 +31,13 @@ function parseLinkForm(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const url = String(formData.get("url") ?? "").trim();
   const type = String(formData.get("type") ?? "");
+  const hidden = formData.get("hidden") === "on";
 
   if (!name || !url || !LINK_TYPES.includes(type)) {
     throw new Error("Name, URL and a valid type are required.");
   }
 
-  return { name, url, type };
+  return { name, url, type, hidden };
 }
 
 export async function listLinks(): Promise<LinkRecord[]> {
@@ -55,6 +58,11 @@ export async function updateLinkAction(id: string, formData: FormData) {
 export async function deleteLinkAction(id: string) {
   await requireAdmin();
   await deleteLink(id);
+}
+
+export async function toggleLinkHiddenAction(id: string, hidden: boolean) {
+  await requireAdmin();
+  return setLinkHidden(id, hidden);
 }
 
 // The manual "revalidate now" button — on top of the automatic revalidation
