@@ -8,11 +8,10 @@ export async function getLinksData() {
   return links; // Returning plain data instead of NextResponse
 }
 
-// Which videos exist, their name/url, barely changes — so this is cached
-// until the next deploy (Vercel resets its Data Cache on every deploy),
-// instead of hitting Mongo on every homepage visit. The click count is
-// deliberately NOT part of this — see getLinkClickCount/incrementLinkClick
-// below, which stay live so the "clicks" display is accurate.
+// Cached until explicitly invalidated — every write below calls
+// updateTag("youtube-links") unconditionally, so any create/edit/delete/hide
+// through /admin/links refreshes this immediately. No manual "revalidate"
+// button needed as a result.
 export const getYoutubeLinks = unstable_cache(
   async () => {
     await connectMongoDB();
@@ -60,36 +59,30 @@ export async function getAllLinks() {
 export async function createLink({ name, url, type, hidden }) {
   await connectMongoDB();
   const link = await Link.create({ name, url, type, hidden });
-  if (type === "youtube") updateTag("youtube-links");
+  updateTag("youtube-links");
   return serializeLink(link.toObject());
 }
 
 export async function updateLink(id, { name, url, type, hidden }) {
   await connectMongoDB();
-  const before = await Link.findById(id).select("type").lean();
   const link = await Link.findByIdAndUpdate(
     id,
     { name, url, type, hidden },
     { new: true }
   ).lean();
-
-  // Revalidate if it was a YouTube link, still is, or just became one —
-  // covers every case that could change what the homepage should show,
-  // including the hidden flag flipping either way.
-  if (before?.type === "youtube" || type === "youtube") updateTag("youtube-links");
-
+  updateTag("youtube-links");
   return link ? serializeLink(link) : null;
 }
 
 export async function setLinkHidden(id, hidden) {
   await connectMongoDB();
   const link = await Link.findByIdAndUpdate(id, { hidden }, { new: true }).lean();
-  if (link?.type === "youtube") updateTag("youtube-links");
+  updateTag("youtube-links");
   return link ? serializeLink(link) : null;
 }
 
 export async function deleteLink(id) {
   await connectMongoDB();
-  const removed = await Link.findByIdAndDelete(id).lean();
-  if (removed?.type === "youtube") updateTag("youtube-links");
+  await Link.findByIdAndDelete(id).lean();
+  updateTag("youtube-links");
 }

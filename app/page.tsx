@@ -35,9 +35,11 @@ export default async function Home({
       YouTube
     </a>
 
-    {youtubeLinks.map((link) => (
-      <YouTubeEmbed key={link.id} link={link} />
-    ))}
+    <div className="w-2/3 min-w-72 flex flex-col items-center mb-16">
+      {youtubeLinks.map((link) => (
+        <YouTubeEmbed key={link.id} link={link} />
+      ))}
+    </div>
    </div>
   );
 }

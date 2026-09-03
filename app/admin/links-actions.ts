@@ -1,6 +1,5 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/libs/admin-auth";
 import {
   getAllLinks,
@@ -63,11 +62,4 @@ export async function deleteLinkAction(id: string) {
 export async function toggleLinkHiddenAction(id: string, hidden: boolean) {
   await requireAdmin();
   return setLinkHidden(id, hidden);
-}
-
-// The manual "revalidate now" button — on top of the automatic revalidation
-// that already happens whenever a YouTube-type link is created/edited/deleted.
-export async function revalidateYoutubeLinksCache() {
-  await requireAdmin();
-  updateTag("youtube-links");
 }

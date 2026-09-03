@@ -42,7 +42,7 @@ export default function YouTubeEmbed({ link }: { link: Link }) {
     clickCount !== null && (process.env.NODE_ENV !== "production" || clickCount > 10);
 
   return (
-    <div className="mt-10 w-2/3 min-w-72">
+    <div className="mt-10 w-full">
       {playing ? (
         <iframe
           className="aspect-video w-full rounded-lg"

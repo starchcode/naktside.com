@@ -7,7 +7,6 @@ import {
   updateLinkAction,
   deleteLinkAction,
   toggleLinkHiddenAction,
-  revalidateYoutubeLinksCache,
   type LinkRecord,
 } from "@/app/admin/links-actions";
 
@@ -21,7 +20,6 @@ export default function LinksManager() {
   const [type, setType] = useState("youtube");
   const [hidden, setHidden] = useState(false);
   const [error, setError] = useState("");
-  const [revalidateMessage, setRevalidateMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const refresh = () => {
@@ -91,32 +89,9 @@ export default function LinksManager() {
     });
   };
 
-  const handleRevalidate = () => {
-    startTransition(async () => {
-      await revalidateYoutubeLinksCache();
-      setRevalidateMessage("Cache revalidated.");
-      setTimeout(() => setRevalidateMessage(""), 3000);
-    });
-  };
-
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Links</h1>
-        <div className="flex items-center gap-3">
-          {revalidateMessage && (
-            <span className="text-sm text-gray-500">{revalidateMessage}</span>
-          )}
-          <button
-            onClick={handleRevalidate}
-            disabled={isPending}
-            className="rounded-full border border-gray-400 px-3 py-1 text-sm transition-opacity hover:opacity-60 disabled:opacity-40"
-            title="YouTube links are already revalidated automatically on any change — use this to force it manually."
-          >
-            Revalidate homepage cache
-          </button>
-        </div>
-      </div>
+      <h1 className="mb-8 text-2xl font-bold">Links</h1>
 
       <form onSubmit={handleSubmit} className="mb-10 flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm">
