@@ -2,6 +2,8 @@ import Image from "next/image";
 
 const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@naktside";
 const INSTAGRAM_URL = "https://www.instagram.com/naktside/";
+const FACEBOOK_URL = "https://www.facebook.com/naktside";
+const SOUNDCLOUD_URL = "https://soundcloud.com/naktside";
 
 export default function SocialLinks() {
   return (
@@ -35,6 +37,38 @@ export default function SocialLinks() {
           width={40}
           height={40}
           className="h-10 w-auto"
+        />
+      </a>
+
+      <a
+        href={FACEBOOK_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Facebook"
+        className="transition-opacity hover:opacity-70"
+      >
+        <Image
+          src="/Facebook_Logo_Primary.png"
+          alt="Facebook"
+          width={40}
+          height={40}
+          className="h-10 w-auto"
+        />
+      </a>
+
+      <a
+        href={SOUNDCLOUD_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="SoundCloud"
+        className="transition-opacity hover:opacity-70"
+      >
+        <Image
+          src="/soundcloud_icon_trimmed.png"
+          alt="SoundCloud"
+          width={67}
+          height={36}
+          className="h-9 w-auto"
         />
       </a>
     </div>
