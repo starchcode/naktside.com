@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { getLinkClickCount, recordLinkClick } from "@/app/actions/link-clicks";
+import { registerPlayer, unregisterPlayer, notifyPlaying } from "@/components/media-player-registry";
 
 type Link = { id: string; name: string; url: string };
 
@@ -17,8 +18,13 @@ declare global {
     YT?: {
       Player: new (
         el: HTMLElement,
-        options: { events?: { onStateChange?: (event: { data: number }) => void } }
-      ) => { destroy: () => void };
+        options: {
+          events?: {
+            onReady?: () => void;
+            onStateChange?: (event: { data: number }) => void;
+          };
+        }
+      ) => { destroy: () => void; pauseVideo: () => void };
       PlayerState: { PLAYING: number };
     };
     onYouTubeIframeAPIReady?: () => void;
@@ -66,24 +72,43 @@ export default function YouTubeEmbed({ link }: { link: Link }) {
   useEffect(() => {
     if (!videoId) return;
 
-    let player: { destroy: () => void } | undefined;
+    let player: { destroy: () => void; pauseVideo: () => void } | undefined;
 
     onceYoutubeApiReady(() => {
       if (!iframeRef.current || !window.YT) return;
+
+      // YouTube's postMessage *commands* (like the pauseVideo() we send to
+      // every other embed below) are unreliable without an origin param
+      // matching the parent page — unlike the onStateChange *events* we
+      // receive, which don't need it. Set imperatively here (not in the
+      // JSX src) since window.location isn't available during SSR.
+      iframeRef.current.src += `&origin=${window.location.origin}`;
+
       player = new window.YT.Player(iframeRef.current, {
         events: {
+          // pauseVideo() etc. aren't attached to the player object until
+          // onReady fires — registering any earlier than that is what
+          // caused "pauseVideo is not a function".
+          onReady: () => registerPlayer(link.id, () => player?.pauseVideo()),
           onStateChange: (event) => {
-            if (event.data === window.YT!.PlayerState.PLAYING && !hasCountedRef.current) {
-              hasCountedRef.current = true;
-              setClickCount((count) => (count ?? 0) + 1);
-              recordLinkClick(link.id); // fire-and-forget, doesn't block playback
+            if (event.data === window.YT!.PlayerState.PLAYING) {
+              notifyPlaying(link.id); // pause every other embedded player
+
+              if (!hasCountedRef.current) {
+                hasCountedRef.current = true;
+                setClickCount((count) => (count ?? 0) + 1);
+                recordLinkClick(link.id); // fire-and-forget, doesn't block playback
+              }
             }
           },
         },
       });
     });
 
-    return () => player?.destroy();
+    return () => {
+      unregisterPlayer(link.id);
+      player?.destroy();
+    };
   }, [videoId, link.id]);
 
   if (!videoId) return null;
@@ -95,7 +120,11 @@ export default function YouTubeEmbed({ link }: { link: Link }) {
 
   return (
     <div className="mt-10 w-full">
-      <Script src="https://www.youtube.com/iframe_api" strategy="afterInteractive" />
+      <Script
+        id="youtube-iframe-api"
+        src="https://www.youtube.com/iframe_api"
+        strategy="afterInteractive"
+      />
 
       <div className="aspect-video w-full overflow-hidden rounded-lg">
         <iframe
