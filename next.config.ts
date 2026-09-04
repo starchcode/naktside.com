@@ -1,10 +1,6 @@
 import { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
-const images: NextConfig["images"] = {
-  remotePatterns: [{ protocol: "https", hostname: "img.youtube.com" }],
-};
-
 const nextConfig = (phase: string): NextConfig => {
   if (phase === PHASE_DEVELOPMENT_SERVER) {
     return {
@@ -12,7 +8,6 @@ const nextConfig = (phase: string): NextConfig => {
         environment: "DEVELOPMENT",
         db_collection: "local_naktside",
       },
-      images,
     };
   }
 
@@ -21,7 +16,6 @@ const nextConfig = (phase: string): NextConfig => {
       environment: "PRODUCTION",
       db_collection: "prod_naktside",
     },
-    images,
   };
 };
 

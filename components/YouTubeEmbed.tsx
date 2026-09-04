@@ -1,10 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import Script from "next/script";
 import { getLinkClickCount, recordLinkClick } from "@/app/actions/link-clicks";
 
 type Link = { id: string; name: string; url: string };
+
+// A click inside the iframe happens in YouTube's own document — the
+// browser's same-origin policy means we can never see it directly, no
+// matter which element in our page holds the click handler. YouTube's
+// official IFrame Player API solves this properly: it posts a message
+// back to us when the video actually starts playing, which is what lets
+// one click both play the video and get counted.
+declare global {
+  interface Window {
+    YT?: {
+      Player: new (
+        el: HTMLElement,
+        options: { events?: { onStateChange?: (event: { data: number }) => void } }
+      ) => { destroy: () => void };
+      PlayerState: { PLAYING: number };
+    };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+const readyCallbacks: (() => void)[] = [];
+
+function onceYoutubeApiReady(callback: () => void) {
+  if (window.YT?.Player) {
+    callback();
+    return;
+  }
+  readyCallbacks.push(callback);
+  if (!window.onYouTubeIframeAPIReady) {
+    window.onYouTubeIframeAPIReady = () => {
+      readyCallbacks.splice(0).forEach((cb) => cb());
+    };
+  }
+}
 
 function extractYoutubeId(url: string): string | null {
   try {
@@ -21,20 +55,38 @@ function extractYoutubeId(url: string): string | null {
 
 export default function YouTubeEmbed({ link }: { link: Link }) {
   const videoId = extractYoutubeId(link.url);
-  const [playing, setPlaying] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hasCountedRef = useRef(false);
   const [clickCount, setClickCount] = useState<number | null>(null);
 
   useEffect(() => {
     getLinkClickCount(link.id).then(setClickCount);
   }, [link.id]);
 
-  if (!videoId) return null;
+  useEffect(() => {
+    if (!videoId) return;
 
-  const handlePlay = () => {
-    setPlaying(true);
-    setClickCount((count) => (count ?? 0) + 1);
-    recordLinkClick(link.id); // fire-and-forget, doesn't block playback
-  };
+    let player: { destroy: () => void } | undefined;
+
+    onceYoutubeApiReady(() => {
+      if (!iframeRef.current || !window.YT) return;
+      player = new window.YT.Player(iframeRef.current, {
+        events: {
+          onStateChange: (event) => {
+            if (event.data === window.YT!.PlayerState.PLAYING && !hasCountedRef.current) {
+              hasCountedRef.current = true;
+              setClickCount((count) => (count ?? 0) + 1);
+              recordLinkClick(link.id); // fire-and-forget, doesn't block playback
+            }
+          },
+        },
+      });
+    });
+
+    return () => player?.destroy();
+  }, [videoId, link.id]);
+
+  if (!videoId) return null;
 
   // In dev, always show the count so it's easy to check while testing.
   // In production, only once it's a meaningful number.
@@ -43,33 +95,19 @@ export default function YouTubeEmbed({ link }: { link: Link }) {
 
   return (
     <div className="mt-10 w-full">
-      {playing ? (
+      <Script src="https://www.youtube.com/iframe_api" strategy="afterInteractive" />
+
+      <div className="aspect-video w-full overflow-hidden rounded-lg">
         <iframe
-          className="aspect-video w-full rounded-lg"
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+          ref={iframeRef}
+          className="h-full w-full"
+          src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
           title={link.name}
+          loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
         />
-      ) : (
-        <button
-          onClick={handlePlay}
-          className="group relative block aspect-video w-full overflow-hidden rounded-lg"
-        >
-          <Image
-            src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-            alt={link.name}
-            fill
-            sizes="(max-width: 640px) 100vw, 640px"
-            className="object-cover"
-          />
-          <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors group-hover:bg-black/40">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-red-600 text-2xl text-white">
-              ▶
-            </span>
-          </span>
-        </button>
-      )}
+      </div>
 
       <p className="mt-2 text-center text-sm text-gray-500">{link.name}</p>
       {showCount && (

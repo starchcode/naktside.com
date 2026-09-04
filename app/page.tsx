@@ -3,8 +3,7 @@ import { trackVisit } from "@/libs/visits_data";
 import ContactReveal from "@/components/ContactReveal";
 import YouTubeEmbed from "@/components/YouTubeEmbed";
 import GoToShortcut from "@/components/GoToShortcut";
-
-const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@naktside";
+import SocialLinks from "@/components/SocialLinks";
 
 export default async function Home({
   searchParams,
@@ -26,14 +25,7 @@ export default async function Home({
       <ContactReveal />
     </div>
 
-    <a
-      href={YOUTUBE_CHANNEL_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="mt-8 rounded-full bg-red-600 px-5 py-2.5 font-semibold text-white shadow-md transition-all hover:bg-red-700 hover:shadow-lg hover:scale-105"
-    >
-      YouTube
-    </a>
+    <SocialLinks />
 
     <div className="w-2/3 min-w-72 flex flex-col items-center mb-16">
       {youtubeLinks.map((link) => (
