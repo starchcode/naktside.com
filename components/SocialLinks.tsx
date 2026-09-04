@@ -64,11 +64,11 @@ export default function SocialLinks() {
         className="transition-opacity hover:opacity-70"
       >
         <Image
-          src="/soundcloud_icon_trimmed.png"
+          src="/soundcloud.jpg"
           alt="SoundCloud"
-          width={67}
-          height={36}
-          className="h-9 w-auto"
+          width={40}
+          height={40}
+          className="h-10 w-auto"
         />
       </a>
     </div>
