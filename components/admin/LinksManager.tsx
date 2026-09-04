@@ -10,7 +10,7 @@ import {
   type LinkRecord,
 } from "@/app/admin/links-actions";
 
-const LINK_TYPES = ["youtube", "instagram"];
+const LINK_TYPES = ["youtube", "instagram", "soundcloud"];
 
 export default function LinksManager() {
   const [links, setLinks] = useState<LinkRecord[] | null>(null);
@@ -19,6 +19,7 @@ export default function LinksManager() {
   const [url, setUrl] = useState("");
   const [type, setType] = useState("youtube");
   const [hidden, setHidden] = useState(false);
+  const [order, setOrder] = useState(1);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -36,6 +37,7 @@ export default function LinksManager() {
     setUrl("");
     setType("youtube");
     setHidden(false);
+    setOrder(1);
     setError("");
   };
 
@@ -45,6 +47,7 @@ export default function LinksManager() {
     setUrl(link.url);
     setType(link.type);
     setHidden(link.hidden);
+    setOrder(link.order);
     setError("");
   };
 
@@ -56,6 +59,7 @@ export default function LinksManager() {
     formData.set("name", name);
     formData.set("url", url);
     formData.set("type", type);
+    formData.set("order", String(order));
     if (hidden) formData.set("hidden", "on");
 
     startTransition(async () => {
@@ -130,6 +134,17 @@ export default function LinksManager() {
           </select>
         </label>
 
+        <label className="flex flex-col gap-1 text-sm">
+          Order
+          <input
+            type="number"
+            min={1}
+            value={order}
+            onChange={(e) => setOrder(Number(e.target.value) || 1)}
+            className="w-20 rounded border border-gray-300 px-3 py-2"
+          />
+        </label>
+
         <label className="flex items-center gap-2 pb-2 text-sm">
           <input
             type="checkbox"
@@ -169,6 +184,7 @@ export default function LinksManager() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-gray-500">
+                <th className="py-2 pr-4">Order</th>
                 <th className="py-2 pr-4">Name</th>
                 <th className="py-2 pr-4">Type</th>
                 <th className="py-2 pr-4">URL</th>
@@ -180,6 +196,7 @@ export default function LinksManager() {
             <tbody>
               {links.map((link) => (
                 <tr key={link.id} className="border-b border-gray-100">
+                  <td className="py-2 pr-4">{link.order}</td>
                   <td className="py-2 pr-4">{link.name}</td>
                   <td className="py-2 pr-4">{link.type}</td>
                   <td className="max-w-[200px] truncate py-2 pr-4">

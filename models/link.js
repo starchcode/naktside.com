@@ -6,10 +6,11 @@ const linkSchema = new Schema(
     url: String,
     type: {
       type: String,
-      enum: ["youtube", "instagram"],
+      enum: ["youtube", "instagram", "soundcloud"],
     },
     clickCount: { type: Number, default: 0 },
     hidden: { type: Boolean, default: false },
+    order: { type: Number, default: 1 },
   },
   {
     timestamps: true,

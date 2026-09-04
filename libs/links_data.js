@@ -9,23 +9,32 @@ export async function getLinksData() {
 }
 
 // Cached until explicitly invalidated — every write below calls
-// updateTag("youtube-links") unconditionally, so any create/edit/delete/hide
-// through /admin/links refreshes this immediately. No manual "revalidate"
+// updateTag("embeddable-links") unconditionally, so any create/edit/delete/hide
+// through /admin/links refreshes it immediately. No manual "revalidate"
 // button needed as a result.
-export const getYoutubeLinks = unstable_cache(
+export const getEmbeddableLinks = unstable_cache(
   async () => {
     await connectMongoDB();
     // $ne: true (not hidden: false) so older docs without the field at all
     // — from before "hidden" existed — still count as visible.
-    const links = await Link.find({ type: "youtube", hidden: { $ne: true } }).lean();
+    // Sort by order ascending — ties (including the default of 1 for
+    // everything) just come back in whatever order Mongo naturally has
+    // them in, no secondary sort key needed.
+    const links = await Link.find({
+      type: { $in: ["youtube", "soundcloud"] },
+      hidden: { $ne: true },
+    })
+      .sort({ order: 1 })
+      .lean();
     return links.map((link) => ({
       id: String(link._id),
       name: link.name,
       url: link.url,
+      type: link.type,
     }));
   },
-  ["youtube-links"],
-  { revalidate: false, tags: ["youtube-links"] }
+  ["embeddable-links"],
+  { revalidate: false, tags: ["embeddable-links"] }
 );
 
 export async function getLinkClickCount(id) {
@@ -47,42 +56,47 @@ function serializeLink(link) {
     type: link.type,
     clickCount: link.clickCount ?? 0,
     hidden: link.hidden ?? false,
+    order: link.order ?? 1,
   };
+}
+
+function invalidateLinkCaches() {
+  updateTag("embeddable-links");
 }
 
 export async function getAllLinks() {
   await connectMongoDB();
-  const links = await Link.find().sort({ createdAt: -1 }).lean();
+  const links = await Link.find().sort({ order: 1, createdAt: -1 }).lean();
   return links.map(serializeLink);
 }
 
-export async function createLink({ name, url, type, hidden }) {
+export async function createLink({ name, url, type, hidden, order }) {
   await connectMongoDB();
-  const link = await Link.create({ name, url, type, hidden });
-  updateTag("youtube-links");
+  const link = await Link.create({ name, url, type, hidden, order });
+  invalidateLinkCaches();
   return serializeLink(link.toObject());
 }
 
-export async function updateLink(id, { name, url, type, hidden }) {
+export async function updateLink(id, { name, url, type, hidden, order }) {
   await connectMongoDB();
   const link = await Link.findByIdAndUpdate(
     id,
-    { name, url, type, hidden },
+    { name, url, type, hidden, order },
     { new: true }
   ).lean();
-  updateTag("youtube-links");
+  invalidateLinkCaches();
   return link ? serializeLink(link) : null;
 }
 
 export async function setLinkHidden(id, hidden) {
   await connectMongoDB();
   const link = await Link.findByIdAndUpdate(id, { hidden }, { new: true }).lean();
-  updateTag("youtube-links");
+  invalidateLinkCaches();
   return link ? serializeLink(link) : null;
 }
 
 export async function deleteLink(id) {
   await connectMongoDB();
   await Link.findByIdAndDelete(id).lean();
-  updateTag("youtube-links");
+  invalidateLinkCaches();
 }

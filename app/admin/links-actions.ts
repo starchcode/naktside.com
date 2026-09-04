@@ -9,7 +9,7 @@ import {
   setLinkHidden,
 } from "@/libs/links_data";
 
-const LINK_TYPES = ["youtube", "instagram"];
+const LINK_TYPES = ["youtube", "instagram", "soundcloud"];
 
 export type LinkRecord = {
   id: string;
@@ -18,6 +18,7 @@ export type LinkRecord = {
   type: string;
   clickCount: number;
   hidden: boolean;
+  order: number;
 };
 
 async function requireAdmin() {
@@ -31,12 +32,14 @@ function parseLinkForm(formData: FormData) {
   const url = String(formData.get("url") ?? "").trim();
   const type = String(formData.get("type") ?? "");
   const hidden = formData.get("hidden") === "on";
+  const orderRaw = Number(formData.get("order"));
+  const order = Number.isFinite(orderRaw) && orderRaw > 0 ? orderRaw : 1;
 
   if (!name || !url || !LINK_TYPES.includes(type)) {
     throw new Error("Name, URL and a valid type are required.");
   }
 
-  return { name, url, type, hidden };
+  return { name, url, type, hidden, order };
 }
 
 export async function listLinks(): Promise<LinkRecord[]> {
