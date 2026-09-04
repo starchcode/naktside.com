@@ -11,8 +11,21 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://naktside.com"),
   title: "naktside music",
   description: "welcome to naktside music",
+  openGraph: {
+    title: "naktside music",
+    description: "welcome to naktside music",
+    url: "https://naktside.com",
+    siteName: "naktside",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "naktside music",
+    description: "welcome to naktside music",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

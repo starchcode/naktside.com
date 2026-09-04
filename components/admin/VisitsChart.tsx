@@ -11,8 +11,20 @@ import {
   YAxis,
 } from "recharts";
 
-const SOURCE_COLORS = { ig: "#C13584", yt: "#dc2626", other: "#6b7280" };
-const SOURCE_LABELS = { ig: "Instagram", yt: "YouTube", other: "Other" };
+const SOURCE_COLORS = {
+  ig: "#C13584",
+  yt: "#dc2626",
+  fb: "#1877F2",
+  sc: "#FF5500",
+  other: "#6b7280",
+};
+const SOURCE_LABELS = {
+  ig: "Instagram",
+  yt: "YouTube",
+  fb: "Facebook",
+  sc: "SoundCloud",
+  other: "Other",
+};
 
 export default function VisitsChart({
   data,
