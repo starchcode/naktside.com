@@ -16,7 +16,7 @@ export default function AdminChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
+    <div className="mx-auto w-2/3 min-w-72 py-10">
       <GoToShortcut keys={["g", "h"]} href="/" />
       <div className="mb-6 flex items-center justify-between">
         <nav className="flex gap-4 text-sm">

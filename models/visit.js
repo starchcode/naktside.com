@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 // Single source of truth for valid visit sources — imported by libs/visits_data.js
 // too, so both the schema and the tagging logic always agree.
-export const VISIT_SOURCES = ["ig", "yt", "fb", "sc", "other"];
+export const VISIT_SOURCES = ["ig", "yt", "fb", "sc", "bs", "x", "th", "other"];
 
 // One row per visit. "other" covers direct visits and anything untagged —
 // every visit is recorded, just bucketed as unknown when there's no ?utm_source.

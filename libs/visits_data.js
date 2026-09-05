@@ -76,9 +76,17 @@ export async function getVisitStats({ range = "30d", source = "all" } = {}) {
     { $group: { _id: "$source", count: { $sum: 1 } } },
   ]);
 
-  const bySource = { ig: 0, yt: 0, fb: 0, sc: 0, other: 0 };
+  const bySource = { ig: 0, yt: 0, fb: 0, sc: 0, bs: 0, x: 0, th: 0, other: 0 };
   for (const row of bySourceRows) bySource[row._id] = row.count;
-  const total = bySource.ig + bySource.yt + bySource.fb + bySource.sc + bySource.other;
+  const total =
+    bySource.ig +
+    bySource.yt +
+    bySource.fb +
+    bySource.sc +
+    bySource.bs +
+    bySource.x +
+    bySource.th +
+    bySource.other;
 
   const dateFormat = dateFormatForRange(range);
   let timeSeries;
@@ -103,7 +111,8 @@ export async function getVisitStats({ range = "30d", source = "all" } = {}) {
     const byDate = new Map();
     for (const row of rows) {
       const date = row._id.date;
-      if (!byDate.has(date)) byDate.set(date, { date, ig: 0, yt: 0, fb: 0, sc: 0, other: 0 });
+      if (!byDate.has(date))
+        byDate.set(date, { date, ig: 0, yt: 0, fb: 0, sc: 0, bs: 0, x: 0, th: 0, other: 0 });
       byDate.get(date)[row._id.source] = row.count;
     }
     timeSeries = Array.from(byDate.values());

@@ -21,12 +21,24 @@ const SOURCE_OPTIONS = [
   { value: "yt", label: "YouTube" },
   { value: "fb", label: "Facebook" },
   { value: "sc", label: "SoundCloud" },
+  { value: "bs", label: "Bluesky" },
+  { value: "x", label: "X" },
+  { value: "th", label: "Threads" },
   { value: "other", label: "Other" },
 ];
 
 type Stats = {
   total: number;
-  bySource: { ig: number; yt: number; fb: number; sc: number; other: number };
+  bySource: {
+    ig: number;
+    yt: number;
+    fb: number;
+    sc: number;
+    bs: number;
+    x: number;
+    th: number;
+    other: number;
+  };
   timeSeries: Record<string, string | number>[];
   byCountry: { country: string; count: number }[];
 };
@@ -89,6 +101,9 @@ export default function AdminDashboard() {
             <StatCard label="YouTube" value={stats.bySource.yt} />
             <StatCard label="Facebook" value={stats.bySource.fb} />
             <StatCard label="SoundCloud" value={stats.bySource.sc} />
+            <StatCard label="Bluesky" value={stats.bySource.bs} />
+            <StatCard label="X" value={stats.bySource.x} />
+            <StatCard label="Threads" value={stats.bySource.th} />
             <StatCard label="Other" value={stats.bySource.other} />
           </div>
 

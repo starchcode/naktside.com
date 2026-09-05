@@ -16,6 +16,12 @@ const SOURCE_COLORS = {
   yt: "#dc2626",
   fb: "#1877F2",
   sc: "#FF5500",
+  bs: "#1185FE",
+  // X and Threads are both monochrome black/white brands — black would be
+  // invisible against this dark-themed chart, so these two get distinct
+  // stand-in colors instead of a "real" brand color.
+  x: "#e7e9ea",
+  th: "#8b5cf6",
   other: "#6b7280",
 };
 const SOURCE_LABELS = {
@@ -23,6 +29,9 @@ const SOURCE_LABELS = {
   yt: "YouTube",
   fb: "Facebook",
   sc: "SoundCloud",
+  bs: "Bluesky",
+  x: "X",
+  th: "Threads",
   other: "Other",
 };
 
