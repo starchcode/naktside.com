@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
+import { getLinkClickCount, recordLinkClick } from "@/app/actions/link-clicks";
 import { registerPlayer, unregisterPlayer, notifyPlaying } from "@/components/media-player-registry";
+import EmbedCaption from "@/components/EmbedCaption";
 
 type Link = { id: string; name: string; url: string };
 
@@ -42,6 +44,12 @@ function flushSoundCloudReadyCallbacks() {
 
 export default function SoundCloudEmbed({ link }: { link: Link }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hasCountedRef = useRef(false);
+  const [clickCount, setClickCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    getLinkClickCount(link.id).then(setClickCount);
+  }, [link.id]);
 
   useEffect(() => {
     let widget: SCWidgetInstance | undefined;
@@ -55,6 +63,12 @@ export default function SoundCloudEmbed({ link }: { link: Link }) {
       });
       widget.bind(window.SC.Widget.Events.PLAY, () => {
         notifyPlaying(link.id); // pause every other embedded player
+
+        if (!hasCountedRef.current) {
+          hasCountedRef.current = true;
+          setClickCount((count) => (count ?? 0) + 1);
+          recordLinkClick(link.id); // fire-and-forget, doesn't block playback
+        }
       });
     });
 
@@ -88,40 +102,13 @@ export default function SoundCloudEmbed({ link }: { link: Link }) {
         loading="lazy"
       />
 
-      <div
-        style={{
-          fontSize: "10px",
-          color: "#cccccc",
-          lineBreak: "anywhere",
-          wordBreak: "normal",
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          textOverflow: "ellipsis",
-          fontFamily:
-            "Interstate,Lucida Grande,Lucida Sans Unicode,Lucida Sans,Garuda,Verdana,Tahoma,sans-serif",
-          fontWeight: 100,
-        }}
-      >
-        <a
-          href={ARTIST_URL}
-          title="naktside"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "#cccccc", textDecoration: "none" }}
-        >
-          naktside
-        </a>{" "}
-        ·{" "}
-        <a
-          href={link.url}
-          title={link.name}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "#cccccc", textDecoration: "none" }}
-        >
-          {link.name}
-        </a>
-      </div>
+      <EmbedCaption
+        platform="SoundCloud"
+        artistUrl={ARTIST_URL}
+        trackUrl={link.url}
+        trackTitle={link.name}
+        clickCount={clickCount}
+      />
     </div>
   );
 }

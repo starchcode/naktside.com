@@ -4,8 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { getLinkClickCount, recordLinkClick } from "@/app/actions/link-clicks";
 import { registerPlayer, unregisterPlayer, notifyPlaying } from "@/components/media-player-registry";
+import EmbedCaption from "@/components/EmbedCaption";
 
 type Link = { id: string; name: string; url: string };
+
+const ARTIST_URL = "https://www.youtube.com/@naktside";
 
 // A click inside the iframe happens in YouTube's own document — the
 // browser's same-origin policy means we can never see it directly, no
@@ -113,11 +116,6 @@ export default function YouTubeEmbed({ link }: { link: Link }) {
 
   if (!videoId) return null;
 
-  // In dev, always show the count so it's easy to check while testing.
-  // In production, only once it's a meaningful number.
-  const showCount =
-    clickCount !== null && (process.env.NODE_ENV !== "production" || clickCount > 10);
-
   return (
     <div className="mt-10 w-full">
       <Script
@@ -138,10 +136,13 @@ export default function YouTubeEmbed({ link }: { link: Link }) {
         />
       </div>
 
-      <p className="mt-2 text-center text-sm text-gray-500">{link.name}</p>
-      {showCount && (
-        <p className="text-center text-xs text-gray-400">{clickCount} clicks</p>
-      )}
+      <EmbedCaption
+        platform="YouTube"
+        artistUrl={ARTIST_URL}
+        trackUrl={link.url}
+        trackTitle={link.name}
+        clickCount={clickCount}
+      />
     </div>
   );
 }
